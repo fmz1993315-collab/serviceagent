@@ -1,0 +1,44 @@
+// Prisma Schema - SQLite（本地开发无需外部数据库）
+// 运行迁移：npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  // "user" | "assistant"
+  role      String
+  content   String
+  createdAt DateTime    @default(now())
+
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  feedbacks Feedback[]
+
+  @@index([sessionId, createdAt])
+}
+
+model Feedback {
+  id        String       @id @default(cuid())
+  messageId String
+  // "thumb_up" | "thumb_down"
+  type      String
+  createdAt DateTime     @default(now())
+
+  message   ChatMessage  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId, createdAt])
+}
